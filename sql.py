@@ -32,57 +32,77 @@ class SQL:
         pass
 
     def sql_from(self, command): # DONE
+        '''
+        Sample query: FROM table1; FROM table1 t1; FROM table1 AS t1
+        '''
+        command_len = len(command.split(' '))
         try:
             name = command.split(' ')[1]
             table = self.database[name]
-            return table
+            if command_len == 3:
+                mod_name = command.split(' ')[2]
+            elif command_len == 4:
+                mod_name = command.split(' ')[3]
+            else:
+                mod_name = name
+
+            return table, mod_name
         except:
             print('Query error: FROM ...')
             return False
 
-    def sql_join(self, command, table): # DONE
+    def sql_join(self, command, t1_name, mod_name1): # DONE
         '''
-        Sample query: JOIN t2 ON t1.a = t2.b
+        Sample query: JOIN table2 ON t1.a = table2.b; JOIN table2 t2 ON t1.a = t2.b; JOIN table2 AS t2 ON t1.a = t2.b
         '''
         error = 'Query error: JOIN ... ON ...'
-        try:
-            name = command.split(' ')[1].strip()
+        command_len = len(command.split(' '))
+        t2_name = command.split(' ')[1].strip()
+            
+        # try:
+        if command_len == 7:
+            mod_name2 = command.split(' ')[2].strip()
+            command = command.replace(f'{mod_name2} ', '').replace(f'{mod_name2}.', f'{t2_name}.').replace(f'{mod_name1}.', f'{t1_name}.')
+        elif command_len == 8:
+            mod_name2 = command.split(' ')[3].strip()
+            command = command.replace(f'{mod_name2} ', '').replace(f'{mod_name2}.', f'{t2_name}.').replace(f'{mod_name1}.', f'{t1_name}.')
+        else:
+            mod_name2 = t2_name
 
-            on = command.split('ON')[1]
+        on = command.split('ON')[1]
 
-            left = on.split('=')[0].split('.')
-            right = on.split('=')[1].split('.')
+        left = on.split('=')[0].split('.')
+        right = on.split('=')[1].split('.')
 
-            name1 = left[0].strip()
-            name2 = right[0].strip()
+        name1 = left[0].strip()
+        name2 = right[0].strip()
 
-            t1, key1 = self.database[name1], left[1].strip()
+        t1, key1 = self.database[name1], left[1].strip()
+        t2, key2 = self.database[name2], right[1].strip()
 
-            t2, key2 = self.database[name2], right[1].strip()
-
-            if self.database[name] != t2:
-                print(error)
-                print('Table in JOIN clause does not match with table in ON clause.')
-                return False
-            elif table != t1:
-                print(error)
-                print('Table in FROM clause does not match with table in ON clause.')
-                return False
-
-            common_elems = [item for item in t1[key1] if item in t2[key2]]
-
-            indices1 = [t1[key1].index(elem) for elem in common_elems]
-            indices2 = [t2[key2].index(elem) for elem in common_elems]
-
-            t1 = {f'{name1}.{key}':[val_list[i] for i in indices1] for key, val_list in t1.items()}
-            t2 = {f'{name2}.{key}':[val_list[i] for i in indices2] for key, val_list in t2.items()}
-
-            table = {**t1, **t2}
-            return table
-
-        except:
+        if self.database[t2_name] != t2:
             print(error)
+            print('Table in JOIN clause does not match with table in ON clause.')
             return False
+        elif self.database[t1_name] != t1:
+            print(error)
+            print('Table in FROM clause does not match with table in ON clause.')
+            return False
+
+        common_elems = [item for item in t1[key1] if item in t2[key2]]
+
+        indices1 = [t1[key1].index(elem) for elem in common_elems]
+        indices2 = [t2[key2].index(elem) for elem in common_elems]
+
+        t1 = {f'{mod_name1}.{key}':[val_list[i] for i in indices1] for key, val_list in t1.items()}
+        t2 = {f'{mod_name2}.{key}':[val_list[i] for i in indices2] for key, val_list in t2.items()}
+
+        table = {**t1, **t2}
+        return table
+
+        # except:
+        #     print(error)
+        #     return False
 
     def sql_groupby():
         pass
