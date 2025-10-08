@@ -28,8 +28,40 @@ class SQL:
             
         self.database[name] = data_dict
 
-    def sql_select():
-        pass
+    def sql_select(self, command, table):
+        '''
+        Sample query: 
+        - SELECT *
+        - SELECT country, users
+        - SELECT country AS c, users u
+        - SELECT c.country AS c, locations.name n
+        - SELECT country, MAX(users)
+        '''
+        error = 'Query error: SELECT ...'
+
+        if command == 'SELECT *':
+            return table
+        
+        command_list = command.replace('SELECT ', '').split(', ')
+
+        agg_funcs = ['MIN', 'MAX', 'COUNT', 'SUM', 'AVG']
+        agg_count = sum([1 for agg_func in agg_funcs if agg_func in command])
+
+        expressions = ['*', '/', '+', '-']
+        expression_count = sum([1 for expression in expressions if expression in command])
+
+
+        if agg_count == 0:
+            for elem in command_list:
+                elem = elem.split(' ')
+                if len(elem) == 2: 
+                    name = elem[1]
+                    table[name] = table.pop(elem[0])
+                elif len(elem) == 3:
+                    name = elem[2]
+                    table[name] = table.pop(elem[0])
+        else:
+            pass
 
     def sql_from(self, command): # DONE
         '''
@@ -51,10 +83,9 @@ class SQL:
             else:
                 mod_name = name
 
-            return table, mod_name
+            return table, name, mod_name
         except:
             print(error)
-            return False
 
     def sql_join(self, command, t1_name, mod_name1): # DONE
         '''
